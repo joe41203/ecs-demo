@@ -22,7 +22,6 @@ module "ecr_repository" {
   tags                                      = local.default_tags
 }
 
-
 resource "aws_ecs_cluster" "this" {
   name               = local.project_code
   capacity_providers = ["FARGATE", "FARGATE_SPOT"]
@@ -36,4 +35,32 @@ resource "aws_ecs_cluster" "this" {
     name  = "containerInsights"
     value = "enabled"
   }
+}
+
+module "alb" {
+  source             = "terraform-aws-modules/alb/aws"
+  version            = "5.6.0"
+  name               = local.project_code
+  vpc_id             = module.network.vpc_id
+  load_balancer_type = "application"
+  internal           = false
+  subnets            = module.network.public_subnets
+  security_groups    = [aws_security_group.http.id, aws_security_group.https.id, aws_security_group.common.id]
+  target_groups = [
+    {
+      backend_protocol = "HTTP"
+      backend_port     = 80
+      target_type      = "ip"
+
+      health_check = {
+        interval = 20
+      }
+    }
+  ]
+  http_tcp_listeners = [
+    {
+      port     = 80
+      protocol = "HTTP"
+    }
+  ]
 }
