@@ -64,3 +64,39 @@ module "alb" {
     }
   ]
 }
+
+resource "aws_ecs_task_definition" "nginx" {
+  family                   = "nginx"
+  container_definitions    = file("task-definitions/fargate-nginx.json")
+  network_mode             = "awsvpc"
+  cpu                      = 512
+  memory                   = 1024
+  requires_compatibilities = ["FARGATE"]
+  task_role_arn            = aws_iam_role.task_execution.arn
+  execution_role_arn       = aws_iam_role.task_execution.arn
+}
+
+
+resource "aws_ecs_service" "nginx" {
+  name            = "nginx"
+  cluster         = aws_ecs_cluster.this.id
+  task_definition = aws_ecs_task_definition.nginx.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+
+  load_balancer {
+    target_group_arn = module.alb.target_group_arns[0]
+    container_name   = "nginx"
+    container_port   = 80
+  }
+
+  network_configuration {
+    subnets          = module.network.private_subnets
+    security_groups  = [aws_security_group.common.id]
+    assign_public_ip = false
+  }
+}
+
+resource "aws_cloudwatch_log_group" "nginx" {
+  name = "awslogs-nginx-ecs"
+}
