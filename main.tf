@@ -24,10 +24,10 @@ module "ecr_repository" {
 
 resource "aws_ecs_cluster" "this" {
   name               = local.project_code
-  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
+  capacity_providers = ["FARGATE"]
 
   default_capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
+    capacity_provider = "FARGATE"
     weight            = 1
   }
 
@@ -65,9 +65,17 @@ module "alb" {
   ]
 }
 
+data "template_file" "container_definitions" {
+  template = file("task-definitions/fargate-nginx.json")
+
+  vars = {
+    image = "${module.ecr_repository.repository_url}:latest"
+  }
+}
+
 resource "aws_ecs_task_definition" "nginx" {
   family                   = "nginx"
-  container_definitions    = file("task-definitions/fargate-nginx.json")
+  container_definitions    = data.template_file.container_definitions.rendered
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
