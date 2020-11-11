@@ -39,5 +39,5 @@ jobs:
           ECR_REPOSITORY: ecs-demo-nginx
         run: |
           IMAGE_TAG=$(echo $(git log --pretty=format:"%h" -4) | tr -d " ")
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./containers/nginx
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./containers/nginx
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
