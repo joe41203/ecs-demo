@@ -46,14 +46,14 @@ jobs:
         id: render-web-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: fargate-nginx.json
+          task-definition: nginx.json
           container-name: nginx
           image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Deploy to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: fargate-nginx.json
+          task-definition: nginx.json
           service: nginx
           cluster: ecs-demo
           wait-for-service-stability: true
