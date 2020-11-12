@@ -47,7 +47,7 @@ jobs:
         id: render-nginx-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: nginx-task-definition.json
+          task-definition: nginx.json
           container-name: nginx
           image: ${{ steps.login-ecr.outputs.registry }}/ecs-demo-nginx:${{ github.sha }}
 
