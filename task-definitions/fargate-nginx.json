@@ -2,14 +2,14 @@
   {
     "name": "nginx",
     "image": "${image}",
-    "memory": 256,
-    "cpu": 256,
+    "memory": 200,
+    "cpu": 10,
     "essential": true,
     "portMappings": [
       {
         "containerPort": 80,
         "protocol": "tcp",
-        "hostPort": 0
+        "hostPort": 80
       }
     ],
     "logConfiguration":{

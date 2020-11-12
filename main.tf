@@ -86,11 +86,16 @@ resource "aws_ecs_task_definition" "nginx" {
 
 
 resource "aws_ecs_service" "nginx" {
-  name            = "nginx"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.nginx.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
+  name                               = "nginx"
+  cluster                            = aws_ecs_cluster.this.id
+  task_definition                    = aws_ecs_task_definition.nginx.arn
+  desired_count                      = 2
+  launch_type                        = "FARGATE"
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+  health_check_grace_period_seconds  = 0
+  scheduling_strategy                = "REPLICA"
+
 
   load_balancer {
     target_group_arn = module.alb.target_group_arns[0]
