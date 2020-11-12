@@ -38,23 +38,21 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ecs-demo-nginx
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          IMAGE_TAG=$(echo $(git log --pretty=format:"%h" -4) | tr -d " ")
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./containers/nginx
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Render Amazon ECS task definition
+      - name: render new task definition
         id: render-nginx-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: nginx-task-definition.json
           container-name: nginx
-          image: ${{ steps.build-nginx-image.outputs.image }}
+          image: ${{ steps.login-ecr.outputs.registry }}/ecs-demo-nginx:${{ github.sha }}
 
-      - name: Deploy to Amazon ECS
+      - name: register new task definition family
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-nginx-container.outputs.task-definition }}
-          service: nginx
           cluster: ecs-demo
-          wait-for-service-stability: true
