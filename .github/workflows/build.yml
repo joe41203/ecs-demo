@@ -34,6 +34,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, tag, and push image to Amazon ECR
+        id: build-nginx-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ecs-demo-nginx
@@ -43,17 +44,17 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Render Amazon ECS task definition
-        id: render-web-container
+        id: render-nginx-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: nginx.json
+          task-definition: task-definition.json
           container-name: nginx
-          image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          image: ${{ steps.build-nginx-image.outputs.image }}
 
       - name: Deploy to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: nginx.json
+          task-definition: ${{ steps.render-nginx-container.outputs.task-definition }}
           service: nginx
           cluster: ecs-demo
           wait-for-service-stability: true
