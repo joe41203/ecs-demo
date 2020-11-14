@@ -1,21 +1,21 @@
 [
   {
-    "name": "nginx",
+    "name": "${name}",
     "image": "${image}",
     "memory": 200,
     "cpu": 10,
     "essential": true,
     "portMappings": [
       {
-        "containerPort": 80,
+        "containerPort": ${port},
         "protocol": "tcp",
-        "hostPort": 80
+        "hostPort": ${port}
       }
     ],
     "logConfiguration":{
           "logDriver":"awslogs",
           "options":{
-             "awslogs-group":"awslogs-nginx-ecs",
+             "awslogs-group":"awslogs-${name}-ecs",
              "awslogs-region":"ap-northeast-1",
              "awslogs-stream-prefix":"ecs"
           }

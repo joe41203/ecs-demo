@@ -13,9 +13,18 @@ module "network" {
   tags                   = local.default_tags
 }
 
-module "ecr_repository" {
+module "nginx_ecr_repository" {
   source                                    = "./modules/aws-ecr"
   repository_name                           = "${local.project_code}-nginx"
+  image_tag_mutability                      = "MUTABLE"
+  image_scanning_configuration_scan_on_push = true
+  keep_image_size                           = "3"
+  tags                                      = local.default_tags
+}
+
+module "rails_ecr_repository" {
+  source                                    = "./modules/aws-ecr"
+  repository_name                           = "${local.project_code}-rails"
   image_tag_mutability                      = "MUTABLE"
   image_scanning_configuration_scan_on_push = true
   keep_image_size                           = "3"
@@ -55,6 +64,15 @@ module "alb" {
       health_check = {
         interval = 20
       }
+    },
+    {
+      backend_protocol = "HTTP"
+      backend_port     = 3000
+      target_type      = "ip"
+
+      health_check = {
+        interval = 20
+      }
     }
   ]
   http_tcp_listeners = [
@@ -65,17 +83,19 @@ module "alb" {
   ]
 }
 
-data "template_file" "container_definitions" {
-  template = file("task-definitions/fargate-nginx.json")
+data "template_file" "nginx_container_definitions" {
+  template = file("task-definitions/task-definition.json")
 
   vars = {
-    image = "${module.ecr_repository.repository_url}:latest"
+    name  = "nginx"
+    image = "${module.nginx_ecr_repository.repository_url}:latest"
+    port  = 80
   }
 }
 
 resource "aws_ecs_task_definition" "nginx" {
   family                   = "nginx"
-  container_definitions    = data.template_file.container_definitions.rendered
+  container_definitions    = data.template_file.nginx_container_definitions.rendered
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
@@ -84,6 +104,26 @@ resource "aws_ecs_task_definition" "nginx" {
   execution_role_arn       = aws_iam_role.task_execution.arn
 }
 
+data "template_file" "rails_container_definitions" {
+  template = file("task-definitions/task-definition.json")
+
+  vars = {
+    name  = "rails"
+    image = "${module.rails_ecr_repository.repository_url}:latest"
+    port  = 3000
+  }
+}
+
+resource "aws_ecs_task_definition" "rails" {
+  family                   = "rails"
+  container_definitions    = data.template_file.rails_container_definitions.rendered
+  network_mode             = "awsvpc"
+  cpu                      = 512
+  memory                   = 1024
+  requires_compatibilities = ["FARGATE"]
+  task_role_arn            = aws_iam_role.task_execution.arn
+  execution_role_arn       = aws_iam_role.task_execution.arn
+}
 
 resource "aws_ecs_service" "nginx" {
   name                               = "nginx"
@@ -110,6 +150,36 @@ resource "aws_ecs_service" "nginx" {
   }
 }
 
+resource "aws_ecs_service" "rails" {
+  name                               = "rails"
+  cluster                            = aws_ecs_cluster.this.id
+  task_definition                    = aws_ecs_task_definition.rails.arn
+  desired_count                      = 2
+  launch_type                        = "FARGATE"
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+  health_check_grace_period_seconds  = 0
+  scheduling_strategy                = "REPLICA"
+
+
+  load_balancer {
+    target_group_arn = module.alb.target_group_arns[0]
+    container_name   = "rails"
+    container_port   = 3000
+  }
+
+  network_configuration {
+    subnets          = module.network.private_subnets
+    security_groups  = [aws_security_group.common.id]
+    assign_public_ip = false
+  }
+}
+
+
 resource "aws_cloudwatch_log_group" "nginx" {
   name = "awslogs-nginx-ecs"
+}
+
+resource "aws_cloudwatch_log_group" "rails" {
+  name = "awslogs-rails-ecs"
 }
