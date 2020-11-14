@@ -40,8 +40,8 @@ jobs:
           ECR_REPOSITORY: ecs-demo-nginx
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./containers/nginx
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./containers/nginx
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: rails Build, tag, and push image to Amazon ECR
         id: build-rails-image
@@ -50,5 +50,5 @@ jobs:
           ECR_REPOSITORY: ecs-demo-rails
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./containers/app
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./containers/app
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
