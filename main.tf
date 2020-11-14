@@ -129,7 +129,7 @@ resource "aws_ecs_service" "nginx" {
   name                               = "nginx"
   cluster                            = aws_ecs_cluster.this.id
   task_definition                    = aws_ecs_task_definition.nginx.arn
-  desired_count                      = 2
+  desired_count                      = 1
   launch_type                        = "FARGATE"
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
@@ -154,7 +154,7 @@ resource "aws_ecs_service" "rails" {
   name                               = "rails"
   cluster                            = aws_ecs_cluster.this.id
   task_definition                    = aws_ecs_task_definition.rails.arn
-  desired_count                      = 2
+  desired_count                      = 1
   launch_type                        = "FARGATE"
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
