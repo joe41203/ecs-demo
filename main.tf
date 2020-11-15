@@ -136,6 +136,9 @@ resource "aws_ecs_service" "nginx" {
   health_check_grace_period_seconds  = 0
   scheduling_strategy                = "REPLICA"
 
+  deployment_controller {
+    type = "CODE_DEPLOY"
+  }
 
   load_balancer {
     target_group_arn = module.alb.target_group_arns[0]
@@ -161,6 +164,9 @@ resource "aws_ecs_service" "rails" {
   health_check_grace_period_seconds  = 0
   scheduling_strategy                = "REPLICA"
 
+  deployment_controller {
+    type = "CODE_DEPLOY"
+  }
 
   load_balancer {
     target_group_arn = module.alb.target_group_arns[0]
